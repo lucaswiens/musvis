@@ -3,4 +3,6 @@
 *flac
 *opus
 build
+compile_commands.json
 musvis
+.cache
