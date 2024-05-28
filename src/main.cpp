@@ -20,7 +20,7 @@ int main() {
 
     InitWindow(width, height, "MusVis");
     InitAudioDevice();
-    SetTargetFPS(30);
+    SetTargetFPS(60);
     SetMasterVolume(0.5f);
 
     bool pause = true;
@@ -49,18 +49,15 @@ int main() {
         }
         // Go to next or previous track
         if (IsKeyPressed(KEY_N)) {
-            std::cout << "NEXT" << std::endl;
             player.NextTrack();
         }
         if (IsKeyPressed(KEY_M)) {
-            std::cout << "Prev" << std::endl;
             player.PreviousTrack();
         }
 
         if (IsFileDropped()) {
             FilePathList dropped_files = LoadDroppedFiles();
             for (size_t i = 0; i < dropped_files.count; i++) {
-                std::cout << "  " << dropped_files.paths[i] << std::endl;
                 player.AddTrack(dropped_files.paths[i]);
             }
             player.SetCurrentTrack(0); // hardcoded for now

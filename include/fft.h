@@ -19,6 +19,7 @@ class MusicPlayer {
     size_t GetNumberOfTracks() { return track_list.size(); }
     std::string GetCurrentTrack() { return track_list.at(current_track).c_str(); }
     float GetWave(const size_t &i) { return std::abs(waves.at(i)); }
+    float GetWaveWithDecayingAmplitude(const size_t &i);
     float GetFrequency(const size_t &i) { return std::abs(frequencies.at(i)); }
     bool HasTrackChanged() { return has_track_changed; };
 
@@ -51,6 +52,7 @@ class MusicPlayer {
     std::vector<std::complex<float>> waves;
     std::vector<std::complex<float>> frequencies;
     std::vector<std::string> track_list;
+    std::vector<float> update_timer, previous_frequencies;
 
     void fft(std::complex<float> *waves, const size_t &wave_size, std::complex<float> *frequencies, const int &stride);
 };
