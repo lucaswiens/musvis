@@ -18,12 +18,22 @@ int main(int argc, char **argv) {
     SetTargetFPS(60);
     SetMasterVolume(0.5f);
 
-    bool pause = true;
-    size_t rectangle_width = 1;
-    size_t wave_width = width / 388;
+    bool pause = argc > 1;
 
     Music music;
     music.looping = false;
+
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] != '/') {
+            std::cout << std::string(GetWorkingDirectory()) + '/' + std::string(argv[i]) << std::endl;
+            player.AddTrack(std::string(GetWorkingDirectory()) + '/' + std::string(argv[i]));
+        } else {
+            player.AddTrack(argv[i]);
+        }
+        // player.SetTrackChangeToFalse();
+        player.SetCurrentTrack(0);
+        pause = false;
+    }
 
     SetExitKey(KEY_Q);
     while (!WindowShouldClose()) {
