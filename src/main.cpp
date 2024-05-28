@@ -1,10 +1,8 @@
 #include <iostream>
 #include <raylib.h>
 
-#include "fft.h"
-
-// FFT is global instance because passing a member callback function is a hassle with the style interface of raylib
-MusicPlayer player(1 << 14);
+// FFT is global instance because passing a member callback function is a hassle with the interface of raylib
+MusicPlayer player(1 << 14, 3000, 1080);
 
 void callback(void *bufferData, unsigned int frames) {
     float(*fs)[2] = static_cast<float(*)[2]>(bufferData);
@@ -14,11 +12,8 @@ void callback(void *bufferData, unsigned int frames) {
     }
 }
 
-int main() {
-    const int width = 1920;
-    const int height = 1080;
-
-    InitWindow(width, height, "MusVis");
+int main(int argc, char **argv) {
+    InitWindow(player.GetWidth(), player.GetHeight(), "MusVis");
     InitAudioDevice();
     SetTargetFPS(60);
     SetMasterVolume(0.5f);
@@ -72,30 +67,14 @@ int main() {
         }
 
         // Update Music Stream and read wave from stream
-        if (!player.TrackListIsEmpty()) {
+        if (!player.TrackListIsEmpty() && !pause) {
             UpdateMusicStream(music);
             AttachAudioStreamProcessor(music.stream, callback);
             player.FastFourierTransformation();
         }
 
         BeginDrawing();
-        if (player.TrackListIsEmpty()) {
-            // center propery..
-            DrawText("Drag your music files here to start playing:", width / 2 - 250, height / 2, 40, BLACK);
-        } else {
-            for (size_t i = 0; i * rectangle_width < width and i < player.GetN(); i++) {
-                // Draw wave - probably remove this later
-                const float &wave_amp = player.GetWave(i) * 500;
-                DrawRectangle(wave_width * i, height / 4 - wave_amp + 1, wave_width, wave_amp, WHITE);
-                DrawRectangle(wave_width * i, height / 4, wave_width, wave_amp, WHITE);
-
-                // Draw amplitude of each frequency up to ~16k or however many fit
-                // on screen
-                const float &amp = player.GetFrequency(i) * 5;
-                DrawRectangle(rectangle_width * i, height - amp, rectangle_width, amp, RED);
-            }
-        }
-
+        player.Draw();
         ClearBackground(DARKGRAY);
 
         DrawRectangle(20, 20, 425, 100, WHITE);
