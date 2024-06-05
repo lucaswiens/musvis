@@ -1,103 +1,70 @@
 #include <iostream>
 #include <raylib.h>
 
+#include "fft.h"
+#include "ui.h"
+
 // FFT is global instance because passing a member callback function is a hassle with the interface of raylib
-MusicPlayer player(1 << 14, 3000, 1080);
+MusicPlayer player(1 << 13, 3000, 1080);
 
 void callback(void *bufferData, unsigned int frames) {
     float(*fs)[2] = static_cast<float(*)[2]>(bufferData);
-
     for (unsigned int i = 0; i < frames; ++i) {
-        player.SetWave(i, fs[i][0]);
+        player.SetWave(i, fs[i][0]); // currently only supports mono visualisation
     }
 }
 
 int main(int argc, char **argv) {
+    UserInterface ui(KEY_P);
     InitWindow(player.GetWidth(), player.GetHeight(), "MusVis");
     InitAudioDevice();
     SetTargetFPS(60);
     SetMasterVolume(0.5f);
 
-    bool pause = argc > 1;
+    ui.SetPause(argc > 1);
 
     Music music;
     music.looping = false;
 
+    // Add arguments to track list
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] != '/') {
-            std::cout << std::string(GetWorkingDirectory()) + '/' + std::string(argv[i]) << std::endl;
-            player.AddTrack(std::string(GetWorkingDirectory()) + '/' + std::string(argv[i]));
+            // std::cout << std::string(GetWorkingDirectory()) + '/' + std::string(argv[i]) << std::endl;
+            ui.AddTrack(std::string(GetWorkingDirectory()) + '/' + std::string(argv[i]));
         } else {
-            player.AddTrack(argv[i]);
+            ui.AddTrack(argv[i]);
         }
-        // player.SetTrackChangeToFalse();
-        player.SetCurrentTrack(0);
-        pause = false;
+        // ui.SetTrackChangeToFalse();
+        ui.SetCurrentTrack(0);
+        ui.SetPause(false); // pause = false;
     }
 
     SetExitKey(KEY_Q);
     while (!WindowShouldClose()) {
-        // Stop Music
-        if (IsKeyPressed(KEY_SPACE)) {
-            StopMusicStream(music);
+        ui.CheckKeyPress(music);
+        ui.CheckFilesDropped();
+        if (ui.HasTrackChanged()) {
+            music = LoadMusicStream(ui.GetCurrentTrack().c_str());
             PlayMusicStream(music);
-            pause = false;
-        }
-        // Pause/Resume music playing
-        if (IsKeyPressed(KEY_P)) {
-            pause = !pause;
-            if (pause) {
-                PauseMusicStream(music);
-            } else {
-                ResumeMusicStream(music);
-            }
-        }
-        // Go to next or previous track
-        if (IsKeyPressed(KEY_N)) {
-            player.NextTrack();
-        }
-        if (IsKeyPressed(KEY_M)) {
-            player.PreviousTrack();
-        }
-
-        if (IsFileDropped()) {
-            FilePathList dropped_files = LoadDroppedFiles();
-            for (size_t i = 0; i < dropped_files.count; i++) {
-                player.AddTrack(dropped_files.paths[i]);
-            }
-            player.SetCurrentTrack(0); // hardcoded for now
-            pause = false;
-            UnloadDroppedFiles(dropped_files);
-        }
-
-        if (player.HasTrackChanged()) {
-            music = LoadMusicStream(player.GetCurrentTrack().c_str());
-            PlayMusicStream(music);
-            player.SetTrackChangeToFalse();
+            ui.SetTrackChangeToFalse();
         }
 
         // Update Music Stream and read wave from stream
-        if (!player.TrackListIsEmpty() && !pause) {
+        if (!ui.TrackListIsEmpty() && !ui.IsPaused()) {
             UpdateMusicStream(music);
             AttachAudioStreamProcessor(music.stream, callback);
             player.FastFourierTransformation();
         }
 
         BeginDrawing();
-        player.Draw();
         ClearBackground(DARKGRAY);
-
-        DrawRectangle(20, 20, 425, 100, WHITE);
-        // DrawRectangleLines(20, 20, 425, 145, GRAY);
-        DrawText("PRESS SPACE TO RESTART MUSIC", 40, 40, 20, BLACK);
-        DrawText("PRESS P TO PAUSE/RESUME", 40, 70, 20, BLACK);
-
+        ui.Draw();
+        player.Draw(ui.TrackListIsEmpty());
         EndDrawing();
     }
 
     UnloadMusicStream(music); // Unload music stream buffers from RAM
-    CloseAudioDevice();       // Close audio device (music streaming is automatically
-                              // stopped)
+    CloseAudioDevice();       // Close audio device (music streaming is automatically stopped)
     CloseWindow();
 
     return 0;

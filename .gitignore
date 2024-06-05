@@ -2,6 +2,7 @@
 *ogg
 *flac
 *opus
+music/
 build
 compile_commands.json
 musvis

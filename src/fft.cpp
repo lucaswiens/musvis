@@ -1,14 +1,10 @@
 #include "fft.h"
 
-MusicPlayer::MusicPlayer(const size_t &n, const size_t &width, const size_t &height) : n(n), width(width), height(height) {
-    rectangle_width = 2;
-    wave_width = width / 388;
-    waves = std::vector<std::complex<float>>(n);
-    frequencies = std::vector<std::complex<float>>(n);
-    previous_frequencies = std::vector<float>(n);
-    update_timer = std::vector<float>(n);
-    has_track_changed = false;
-}
+MusicPlayer::MusicPlayer(const size_t &n, const size_t &width, const size_t &height)
+    : n(n), width(width), height(height), rectangle_width(1), wave_width(width / 388), x_offset(width / 8), y_offset(0), waves(std::vector<std::complex<float>>(n)),
+      frequencies(std::vector<std::complex<float>>(n)), update_timer(std::vector<float>(n)), previous_frequencies(std::vector<float>(n)) {}
+
+float MusicPlayer::GetWaveWithDecayingAmplitude(const size_t &i) { return previous_frequencies.at(i); }
 
 void MusicPlayer::FastFourierTransformation() {
     // calls fft to ensure correct passing of pointer arguments
@@ -39,61 +35,19 @@ void MusicPlayer::fft(std::complex<float> *waves, const size_t &wave_size, std::
     }
 }
 
-void MusicPlayer::Draw() {
-    if (TrackListIsEmpty()) {
+void MusicPlayer::Draw(const bool &track_list_is_empty) {
+    if (track_list_is_empty) {
         // center propery..
         DrawText("Drag your music files here to start playing:", width / 2 - 250, height / 2, 40, BLACK);
     } else {
         const size_t max_frequency = std::min({width / rectangle_width, n});
-        for (size_t i = 0; i * rectangle_width <= width && i < n; i++) {
-            // Draw wave - probably remove this later
-            const float &wave_amp = GetWave(i) * 500;
-            DrawRectangle(wave_width * i, height / 4 - wave_amp + 1, wave_width, wave_amp, GRAY);
-            DrawRectangle(wave_width * i, height / 4, wave_width, wave_amp, GRAY);
-
-            const float &amp = GetWaveWithDecayingAmplitude(i) * 5;
+        for (size_t i = 0; i * rectangle_width < width && i < n; i++) {
+            const float &amp = std::log(GetWaveWithDecayingAmplitude(i)) * 100;
             float hue = 360 * static_cast<float>(i) / max_frequency;
             const float saturation = 1.0;
             const float value = 1.;
             Color frequency_color = ColorFromHSV(hue, saturation, value);
-            DrawRectangle(rectangle_width * i, height - amp, rectangle_width, amp, frequency_color);
+            DrawRectangle(rectangle_width * i + x_offset, height - y_offset - amp, rectangle_width, amp, frequency_color);
         }
     }
-}
-
-void MusicPlayer::AddTrack(const std::string &track_name) {
-    if (std::find(track_list.begin(), track_list.end(), track_name) == track_list.end()) {
-        track_list.push_back(track_name);
-    }
-}
-
-void MusicPlayer::RemoveTrack(const std::string &track_name) {
-    std::vector<std::string>::iterator track_position = std::find(track_list.begin(), track_list.end(), track_name);
-    if (track_position == track_list.end()) {
-        track_list.erase(track_position);
-    }
-}
-
-float MusicPlayer::GetWaveWithDecayingAmplitude(const size_t &i) { return previous_frequencies.at(i); }
-
-void MusicPlayer::NextTrack() {
-    has_track_changed = !track_list.empty();
-    if (current_track != track_list.size() - 1) {
-        current_track++;
-    } else {
-        current_track = 0;
-    }
-}
-void MusicPlayer::PreviousTrack() {
-    has_track_changed = !track_list.empty();
-    if (current_track != 0) {
-        current_track--;
-    } else {
-        current_track = track_list.size() - 1;
-    }
-}
-
-void MusicPlayer::SetCurrentTrack(const size_t &i) {
-    has_track_changed = !track_list.empty();
-    current_track = i;
 }
