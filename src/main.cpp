@@ -15,7 +15,7 @@ void callback(void *bufferData, unsigned int frames) {
 }
 
 int main(int argc, char **argv) {
-    UserInterface ui(KEY_P);
+    UserInterface ui(KEY_P, KEY_SPACE, KEY_N, KEY_M);
     InitWindow(player.GetWidth(), player.GetHeight(), "MusVis");
     InitAudioDevice();
     SetTargetFPS(60);

@@ -1,7 +1,7 @@
 #include "fft.h"
 
 MusicPlayer::MusicPlayer(const size_t &n, const size_t &width, const size_t &height)
-    : n(n), width(width), height(height), rectangle_width(1), wave_width(width / 388), x_offset(width / 8), y_offset(0), waves(std::vector<std::complex<float>>(n)),
+    : n(n), width(width), height(height), rectangle_width(1), wave_width(width / 388), x_offset(width / 8), y_offset(height / 8), waves(std::vector<std::complex<float>>(n)),
       frequencies(std::vector<std::complex<float>>(n)), update_timer(std::vector<float>(n)), previous_frequencies(std::vector<float>(n)) {}
 
 float MusicPlayer::GetWaveWithDecayingAmplitude(const size_t &i) { return previous_frequencies.at(i); }

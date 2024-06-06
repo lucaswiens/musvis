@@ -2,14 +2,13 @@
 #define USERINTERFACE_H
 
 #include <algorithm>
-#include <cstring>
 #include <raylib.h>
 #include <string>
 #include <vector>
 
 class UserInterface {
   public:
-    UserInterface(const KeyboardKey &pause_key);
+    UserInterface(const KeyboardKey &pause_key, const KeyboardKey &stop_key, const KeyboardKey &next_key, const KeyboardKey &previous_key);
     void CheckKeyPress(const Music &music);
     void CheckFilesDropped();
     void AddTrack(const std::string &track_name);
@@ -30,9 +29,13 @@ class UserInterface {
 
   private:
     Font text_font;
-    KeyboardKey pause_key;
-    bool has_track_changed, pause;
-    size_t current_track, border_offset, button_offset, track_list_height, track_list_width, track_name_length;
+    KeyboardKey pause_key, stop_key, next_key, previous_key;
+    bool has_track_changed, pause, pause_hover = false, stop_hover = false, next_hover = false, previous_hover = false;
+    size_t current_track, track_hover;
+    float border_offset, button_offset, button_size, track_list_height, track_list_width, track_name_length, x_offset, y_offset;
+    Vector2 mouse_position;
+    Rectangle pause_button, stop_button, next_button, previous_button;
+    std::vector<Rectangle> track_list_buttons; 
     std::vector<std::string> track_list;
 };
 
