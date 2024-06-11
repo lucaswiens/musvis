@@ -1,6 +1,8 @@
 #include "fft.h"
 
-MusicPlayer::MusicPlayer(const size_t &n, const size_t &width, const size_t &height) : n(n), rectangle_width(1), wave_width(width / 388), x_offset(width / 8), y_offset(height / 8), waves(std::vector<std::complex<float>>(n)), frequencies(std::vector<std::complex<float>>(n)), update_timer(std::vector<float>(n)), previous_frequencies(std::vector<float>(n)) {}
+MusicPlayer::MusicPlayer(const size_t &n, const size_t &width, const size_t &height) : n(n), rectangle_width(1), wave_width(width / 388), x_offset(width / 8), y_offset(height / 8), waves(std::vector<std::complex<float>>(n)), frequencies(std::vector<std::complex<float>>(n)), update_timer(std::vector<float>(n)), previous_frequencies(std::vector<float>(n)) {
+    shader = LoadShader(0, "resources/shaders/sdf.fs");
+}
 
 float MusicPlayer::GetWaveWithDecayingAmplitude(const size_t &i) { return previous_frequencies.at(i); }
 
@@ -38,8 +40,8 @@ void MusicPlayer::Draw(const bool &track_list_is_empty, const size_t &width, con
     y_offset = height / 8;
 
     if (track_list_is_empty) {
-        // center propery..
-        DrawText("Drag your music files here to start playing:", width / 2 - 250, height / 2, 40, BLACK);
+        return;
+        //DrawText("Drag your music files here to start playing:", width / 2 - 250, height / 2, 40, BLACK);
     } else {
         const size_t max_frequency = std::min({width / rectangle_width, n});
         for (size_t i = 0; i * rectangle_width < width && i < n; i++) {
