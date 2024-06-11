@@ -1,23 +1,29 @@
 #include "ui.h"
 
-UserInterface::UserInterface(const KeyboardKey &pause_key, const KeyboardKey &stop_key, const KeyboardKey &next_key, const KeyboardKey &previous_key) : pause_key(pause_key), stop_key(stop_key), next_key(next_key), previous_key(previous_key), border_offset(5), button_offset(5), button_size(40), track_list_height(40), track_list_width(3000 / 8 - 50), track_name_length(28) {
-    x_offset = 3000 / 8;
-    y_offset = 1080 / 8;
-    pause_button = {button_offset + x_offset, border_offset + button_offset + 7 * 1080 / 8, button_size - button_offset, button_size - button_offset};
-    stop_button = {button_offset + x_offset + (2 * button_offset + button_size), border_offset + button_offset + 7 * 1080 / 8, button_size - button_offset, button_size - button_offset};
-    previous_button = {button_offset + x_offset + 2 * (2 * button_offset + button_size), border_offset + button_offset + 7 * 1080 / 8, button_size - button_offset, button_size - button_offset};
-    next_button = {button_offset + x_offset + 3 * (2 * button_offset + button_size), border_offset + button_offset + 7 * 1080 / 8, button_size - button_offset, button_size - button_offset};
-}
+UserInterface::UserInterface(const KeyboardKey &pause_key, const KeyboardKey &stop_key, const KeyboardKey &next_key, const KeyboardKey &previous_key) : pause_key(pause_key), stop_key(stop_key), next_key(next_key), previous_key(previous_key), border_offset(5), button_offset(5), button_size(40), track_list_height(40), track_list_width(375), track_name_length(28) {}
 
-void UserInterface::Draw() {
+void UserInterface::Draw(const size_t &width, const size_t &height) {
+    x_offset = width / 8;
+    y_offset = height / 8;
+
+    track_list_width = x_offset - 50;
+    track_name_length = static_cast<int>(track_list_width / 12);
+
     // Track List
     for (size_t i = 0; i < track_list.size(); i++) {
+        track_list_buttons.at(i) = {border_offset + button_offset, border_offset + button_offset + track_list_height * i, track_list_width, track_list_height - button_offset};
+
         std::string track = track_list.at(i).substr(track_list.at(i).rfind('/') + 1, track_name_length);
         track = track.size() < track_name_length ? track : track + "...";
         Color background = current_track == i ? BLUE : track_hover == i ? LIGHTGRAY : GRAY;
         DrawRectangleRec(track_list_buttons.at(i), background);
         DrawText(track.c_str(), border_offset + track_list_height / 2, border_offset + button_offset + track_list_height * (i + 0.25), track_list_height / 2, BLACK);
     }
+
+    pause_button = {button_offset + x_offset, border_offset + button_offset + 7.0f * height / 8, button_size - button_offset, button_size - button_offset};
+    stop_button = {button_offset + x_offset + (2 * button_offset + button_size), border_offset + button_offset + 7.0f * height / 8, button_size - button_offset, button_size - button_offset};
+    previous_button = {button_offset + x_offset + 2 * (2 * button_offset + button_size), border_offset + button_offset + 7.0f * height / 8, button_size - button_offset, button_size - button_offset};
+    next_button = {button_offset + x_offset + 3 * (2 * button_offset + button_size), border_offset + button_offset + 7.0f * height / 8, button_size - button_offset, button_size - button_offset};
     // Buttons
     DrawRectangleRec(pause_button, pause_hover ? LIGHTGRAY : GRAY);
     DrawRectangleRec(stop_button, stop_hover ? LIGHTGRAY : GRAY);

@@ -15,12 +15,21 @@ void callback(void *bufferData, unsigned int frames) {
 }
 
 int main(int argc, char **argv) {
-    UserInterface ui(KEY_P, KEY_SPACE, KEY_N, KEY_M);
-    InitWindow(player.GetWidth(), player.GetHeight(), "MusVis");
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_ALWAYS_RUN);
+    size_t factor = 2*135;
+    InitWindow(factor * 16, factor * 9, "Musializer");
+    { // load window icons
+        const char *file_path = "./resources/icon/musvis.png";
+        Image logo = LoadImage(GetFileExtension(file_path));
+        SetWindowIcon(logo);
+        UnloadImage(logo);
+    }
+
     InitAudioDevice();
-    SetTargetFPS(60);
+    SetTargetFPS(30);
     SetMasterVolume(0.5f);
 
+    UserInterface ui(KEY_P, KEY_SPACE, KEY_N, KEY_M);
     ui.SetPause(argc > 1);
 
     Music music;
@@ -29,18 +38,22 @@ int main(int argc, char **argv) {
     // Add arguments to track list
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] != '/') {
-            // std::cout << std::string(GetWorkingDirectory()) + '/' + std::string(argv[i]) << std::endl;
             ui.AddTrack(std::string(GetWorkingDirectory()) + '/' + std::string(argv[i]));
         } else {
             ui.AddTrack(argv[i]);
         }
-        // ui.SetTrackChangeToFalse();
         ui.SetCurrentTrack(0);
         ui.SetPause(false); // pause = false;
     }
 
+    size_t width = GetScreenWidth();
+    size_t height = GetScreenHeight();
+
     SetExitKey(KEY_Q);
     while (!WindowShouldClose()) {
+        width = GetScreenWidth();
+        height = GetScreenHeight();
+
         ui.CheckKeyPress(music);
         ui.CheckFilesDropped();
         if (ui.HasTrackChanged()) {
@@ -58,13 +71,13 @@ int main(int argc, char **argv) {
 
         BeginDrawing();
         ClearBackground(DARKGRAY);
-        ui.Draw();
-        player.Draw(ui.TrackListIsEmpty());
+        ui.Draw(width, height);
+        player.Draw(ui.TrackListIsEmpty(), width, height);
         EndDrawing();
     }
 
-    UnloadMusicStream(music); // Unload music stream buffers from RAM
-    CloseAudioDevice();       // Close audio device (music streaming is automatically stopped)
+    UnloadMusicStream(music);
+    CloseAudioDevice();
     CloseWindow();
 
     return 0;

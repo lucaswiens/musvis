@@ -15,7 +15,7 @@ class UserInterface {
     void RemoveTrack(const std::string &track_name);
     void NextTrack();
     void PreviousTrack();
-    void Draw();
+    void Draw(const size_t &width, const size_t &height);
 
     void SetTrackChangeToFalse() { has_track_changed = false; }
     void SetCurrentTrack(const size_t &i);
