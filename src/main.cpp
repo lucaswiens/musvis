@@ -1,4 +1,3 @@
-#include <iostream>
 #include <raylib.h>
 
 #include "fft.h"
@@ -16,7 +15,7 @@ void callback(void *bufferData, unsigned int frames) {
 
 int main(int argc, char **argv) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_ALWAYS_RUN);
-    size_t factor = 2*135;
+    size_t factor = 2 * 135;
     InitWindow(factor * 16, factor * 9, "Musializer");
     { // load window icons
         const char *file_path = "./resources/icon/musvis.png";
@@ -56,10 +55,12 @@ int main(int argc, char **argv) {
 
         ui.CheckKeyPress(music);
         ui.CheckFilesDropped();
+        ui.CheckEvents();
+
         if (ui.HasTrackChanged()) {
             music = LoadMusicStream(ui.GetCurrentTrack().c_str());
             PlayMusicStream(music);
-            ui.SetTrackChangeToFalse();
+            ui.SetTrackChangeToFalse(static_cast<float>(music.frameCount) / music.stream.sampleRate);
         }
 
         // Update Music Stream and read wave from stream

@@ -1,6 +1,6 @@
 #include "ui.h"
 
-UserInterface::UserInterface(const KeyboardKey &pause_key, const KeyboardKey &stop_key, const KeyboardKey &next_key, const KeyboardKey &previous_key) : pause_key(pause_key), stop_key(stop_key), next_key(next_key), previous_key(previous_key), border_offset(5), button_offset(5), button_size(40), track_list_height(40), track_list_width(375), track_name_length(28) {
+UserInterface::UserInterface(const KeyboardKey &pause_key, const KeyboardKey &stop_key, const KeyboardKey &next_key, const KeyboardKey &previous_key) : pause_key(pause_key), stop_key(stop_key), next_key(next_key), previous_key(previous_key), border_offset(10), button_offset(5), button_size(40), track_list_height(40), track_list_width(375), track_name_length(28) {
     shader = LoadShader(0, "resources/shaders/sdf.fs");
 }
 
@@ -8,10 +8,18 @@ void UserInterface::Draw(const size_t &width, const size_t &height) {
     x_offset = width / 8;
     y_offset = height / 8;
 
+    const float horizontal_border_position = (width - x_offset - button_offset - border_offset);
+    const float vertical_border_position = 7.0f * height / 8;
+
+    time_position += !pause * GetFrameTime();
+    std::string timer_label = ConvertSecondToTimeLabel(time_position) + " / " + track_duration_label;
+    Vector2 time_label_length = MeasureTextEx(font, timer_label.c_str(), 45, 1.0f);
+
     track_list_width = x_offset - 50;
     track_name_length = static_cast<int>(track_list_width / 12);
 
     // Track List
+    BeginShaderMode(shader);
     for (size_t i = 0; i < track_list.size(); i++) {
         track_list_buttons.at(i) = {border_offset + button_offset, border_offset + button_offset + track_list_height * i, track_list_width, track_list_height - button_offset};
 
@@ -20,17 +28,23 @@ void UserInterface::Draw(const size_t &width, const size_t &height) {
         Color background = current_track == i ? BLUE : track_hover == i ? LIGHTGRAY : GRAY;
         DrawRectangleRec(track_list_buttons.at(i), background);
         const Vector2 position = {border_offset + track_list_height / 2.0f, border_offset + button_offset + track_list_height * (i + 0.25f)};
-        BeginShaderMode(shader);
         DrawTextEx(font, track.c_str(), position, track_list_height / 1.5f, 1.0, BLACK);
         // int codepoint_size = codepoints.at(i).size() < track_name_length ? codepoints.at(i).size() : track_name_length;
         // DrawTextCodepoints(font, codepoints.at(i).data(), codepoint_size, position, track_list_height / 1.5f, 5, BLACK);
-        EndShaderMode();
     }
 
-    pause_button = {button_offset + x_offset, border_offset + button_offset + 7.0f * height / 8, button_size - button_offset, button_size - button_offset};
-    stop_button = {button_offset + x_offset + (2 * button_offset + button_size), border_offset + button_offset + 7.0f * height / 8, button_size - button_offset, button_size - button_offset};
-    previous_button = {button_offset + x_offset + 2 * (2 * button_offset + button_size), border_offset + button_offset + 7.0f * height / 8, button_size - button_offset, button_size - button_offset};
-    next_button = {button_offset + x_offset + 3 * (2 * button_offset + button_size), border_offset + button_offset + 7.0f * height / 8, button_size - button_offset, button_size - button_offset};
+    track_bar = {button_offset + x_offset, vertical_border_position + button_size + border_offset + button_offset, horizontal_border_position, button_size - button_offset};
+    DrawRectangleRec(track_bar, LIGHTGRAY);
+    DrawRectangleRec({track_bar.x, track_bar.y, time_position / track_duration * track_bar.width, track_bar.height}, BLUE);
+
+    DrawTextEx(font, timer_label.c_str(), {track_bar.x + track_bar.width - time_label_length.x - border_offset, border_offset + button_size + vertical_border_position}, 45, 1.0f, BLACK);
+
+    EndShaderMode();
+
+    pause_button = {button_offset + x_offset, vertical_border_position + border_offset + button_offset, button_size - button_offset, button_size - button_offset};
+    stop_button = {pause_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
+    previous_button = {stop_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
+    next_button = {previous_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
     // Buttons
     DrawRectangleRec(pause_button, pause_hover ? LIGHTGRAY : GRAY);
     DrawRectangleRec(stop_button, stop_hover ? LIGHTGRAY : GRAY);
@@ -50,6 +64,12 @@ void UserInterface::CheckKeyPress(const Music &music) {
             track_hover = i;
             break;
         }
+    }
+
+    if (CheckCollisionPointRec(mouse_position, track_bar) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        // track_bar = {button_offset + x_offset, border_offset + button_offset + 7.5f / 7.0f * vertical_border_position, horizontal_border_position + button_size - button_offset, button_size - button_offset};
+        time_position = (mouse_position.x - track_bar.x) / track_bar.width * track_duration;
+        SeekMusicStream(music, time_position);
     }
 
     if (IsKeyPressed(stop_key) || (stop_hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
@@ -81,6 +101,12 @@ void UserInterface::CheckFilesDropped() {
         SetCurrentTrack(0);
         SetPause(false);
         UnloadDroppedFiles(dropped_files);
+    }
+}
+
+void UserInterface::CheckEvents() {
+    if (time_position > track_duration) {
+        NextTrack();
     }
 }
 
@@ -117,6 +143,7 @@ void UserInterface::NextTrack() {
         current_track = 0;
     }
 }
+
 void UserInterface::PreviousTrack() {
     has_track_changed = !track_list.empty();
     if (current_track != 0) {
@@ -134,4 +161,11 @@ void UserInterface::SetCurrentTrack(const size_t &i) {
 UserInterface::~UserInterface() {
     UnloadShader(shader);
     UnloadFont(font);
+}
+
+std::string UserInterface::ConvertSecondToTimeLabel(const float &time) {
+    std::string minutes = std::to_string(static_cast<int>(time / 60));
+    int seconds = static_cast<int>(time) % 60;
+    std::string seconds_label = (seconds < 10 ? "0" : "") + std::to_string(seconds);
+    return minutes + ":" + seconds_label;
 }
