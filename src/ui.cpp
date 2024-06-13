@@ -71,7 +71,7 @@ void UserInterface::CheckKeyPress(const Music &music) {
     stop_hover = CheckCollisionPointRec(mouse_position, stop_button);
     next_hover = CheckCollisionPointRec(mouse_position, next_button);
     previous_hover = CheckCollisionPointRec(mouse_position, previous_button);
-    track_hover = 999;
+    track_hover = std::numeric_limits<size_t>::max();
     for (size_t i = 0; i < track_list_buttons.size(); i++) {
         if (CheckCollisionPointRec(mouse_position, track_list_buttons.at(i))) {
             track_hover = i;
@@ -99,8 +99,10 @@ void UserInterface::CheckKeyPress(const Music &music) {
         NextTrack();
     } else if (IsKeyPressed(previous_key) || (previous_hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         PreviousTrack();
-    } else if (track_hover < 999 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    } else if (track_hover < std::numeric_limits<size_t>::max() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         SetCurrentTrack(track_hover);
+    } else if (track_hover < std::numeric_limits<size_t>::max() && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        RemoveTrack(track_hover);
     }
 }
 
@@ -140,10 +142,14 @@ void UserInterface::AddTrack(const std::string &track) {
     }
 }
 
-void UserInterface::RemoveTrack(const std::string &track_name) {
-    std::vector<std::string>::iterator track_position = std::find(track_list.begin(), track_list.end(), track_name);
-    if (track_position == track_list.end()) {
-        track_list.erase(track_position);
+void UserInterface::RemoveTrack(const size_t &track_position) {
+    if (track_position < track_list.size()) {
+        track_list.erase(track_list.begin() + track_position);
+        if (current_track == track_hover) {
+            SetCurrentTrack(track_hover);
+        } else if (track_position < current_track) {
+            current_track--;
+        }
     }
 }
 
