@@ -67,8 +67,9 @@ int main(int argc, char **argv) {
         if (!ui.TrackListIsEmpty() && !ui.IsPaused()) {
             UpdateMusicStream(music);
             AttachAudioStreamProcessor(music.stream, callback);
-            visualizer.FastFourierTransformation();
         }
+
+        visualizer.FastFourierTransformation(ui.TrackListIsEmpty());
 
         BeginDrawing();
         ClearBackground(DARKGRAY);

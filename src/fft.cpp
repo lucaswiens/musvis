@@ -7,9 +7,14 @@ float FFT::GetWaveWithDecayingAmplitude(const size_t &i) {
     return previous_frequencies.at(i);
 }
 
-void FFT::FastFourierTransformation() {
+void FFT::FastFourierTransformation(const bool &is_empty_track_list) {
+    if (is_empty_track_list) {
+        std::fill(previous_frequencies.begin(), previous_frequencies.end(), 0);
+        return;
+    }
+
     // calls fft to ensure correct passing of pointer arguments
-    fft(this->waves.data(), n, this->frequencies.data(), 1);
+    fft(waves.data(), n, frequencies.data(), 1);
     // stores decaying amplitude to avoid unpleasant flickering
     const float frame_time = GetFrameTime();
     for (size_t i = 0; i < n; i++) {
@@ -42,7 +47,7 @@ void FFT::fft(std::complex<float> *waves, const size_t &wave_size, std::complex<
     }
 }
 
-void FFT::Draw(const bool &track_list_is_empty, const size_t &width, const size_t &height) {
+void FFT::Draw(const bool &is_empty_track_list, const size_t &width, const size_t &height) {
     x_offset = width / 8;
     y_offset = height / 8;
 

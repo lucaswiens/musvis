@@ -1,6 +1,14 @@
 #include "ui.h"
+#include <raylib.h>
 
 UserInterface::UserInterface(const KeyboardKey &pause_key, const KeyboardKey &stop_key, const KeyboardKey &next_key, const KeyboardKey &previous_key) : pause_key(pause_key), stop_key(stop_key), next_key(next_key), previous_key(previous_key), border_offset(10), button_offset(5), button_size(40), track_list_height(40), track_list_width(375), track_name_length(28) {
+    int file_size = 0;
+    unsigned char *file_data = LoadFileData(font_path.c_str(), &file_size);
+    font.glyphs = LoadFontData(file_data, file_size, 32, 0, 0, FONT_SDF);
+    atlas = GenImageFontAtlas(font.glyphs, &font.recs, 95, 32, 0, 1);
+    font.texture = LoadTextureFromImage(atlas);
+    UnloadImage(atlas);
+    SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR); // Required for SDF font
     shader = LoadShader(0, "resources/shaders/sdf.fs");
 }
 
@@ -20,36 +28,41 @@ void UserInterface::Draw(const size_t &width, const size_t &height) {
 
     // Track List
     BeginShaderMode(shader);
-    for (size_t i = 0; i < track_list.size(); i++) {
-        track_list_buttons.at(i) = {border_offset + button_offset, border_offset + button_offset + track_list_height * i, track_list_width, track_list_height - button_offset};
+    if (track_list.empty()) {
+        std::string empty_track_list_instructions = "Drag your music files here to start playing:";
+        Vector2 empty_track_list_instructions_length = MeasureTextEx(font, empty_track_list_instructions.c_str(), 65, 1.0f);
 
-        std::string track = track_list.at(i).substr(track_list.at(i).rfind('/') + 1, track_name_length);
-        track = track.size() < track_name_length ? track : track + "...";
-        Color background = current_track == i ? BLUE : track_hover == i ? LIGHTGRAY : GRAY;
-        DrawRectangleRec(track_list_buttons.at(i), background);
-        const Vector2 position = {border_offset + track_list_height / 2.0f, border_offset + button_offset + track_list_height * (i + 0.25f)};
-        DrawTextEx(font, track.c_str(), position, track_list_height / 1.5f, 1.0, BLACK);
-        // int codepoint_size = codepoints.at(i).size() < track_name_length ? codepoints.at(i).size() : track_name_length;
-        // DrawTextCodepoints(font, codepoints.at(i).data(), codepoint_size, position, track_list_height / 1.5f, 5, BLACK);
+        DrawTextEx(font, empty_track_list_instructions.c_str(), {(width - empty_track_list_instructions_length.x) / 2, height / 2}, 65, 1.0f, BLACK);
+    } else {
+        for (size_t i = 0; i < track_list.size(); i++) {
+            track_list_buttons.at(i) = {border_offset + button_offset, border_offset + button_offset + track_list_height * i, track_list_width, track_list_height - button_offset};
+
+            std::string track = track_list.at(i).substr(track_list.at(i).rfind('/') + 1, track_name_length);
+            track = track.size() < track_name_length ? track : track + "...";
+            Color background = current_track == i ? BLUE : track_hover == i ? LIGHTGRAY : GRAY;
+            DrawRectangleRec(track_list_buttons.at(i), background);
+            const Vector2 position = {border_offset + track_list_height / 2.0f, border_offset + button_offset + track_list_height * (i + 0.25f)};
+            DrawTextEx(font, track.c_str(), position, track_list_height / 1.5f, 1.0, BLACK);
+            // int codepoint_size = codepoints.at(i).size() < track_name_length ? codepoints.at(i).size() : track_name_length;
+            // DrawTextCodepoints(font, codepoints.at(i).data(), codepoint_size, position, track_list_height / 1.5f, 5, BLACK);
+        }
+
+        track_bar = {button_offset + x_offset, vertical_border_position + button_size + border_offset + button_offset, horizontal_border_position, button_size - button_offset};
+        DrawRectangleRec(track_bar, LIGHTGRAY);
+        DrawRectangleRec({track_bar.x, track_bar.y, time_position / track_duration * track_bar.width, track_bar.height}, BLUE);
+
+        DrawTextEx(font, timer_label.c_str(), {track_bar.x + track_bar.width - time_label_length.x - border_offset, border_offset + button_size + vertical_border_position}, 45, 1.0f, BLACK);
+
+        pause_button = {button_offset + x_offset, vertical_border_position + border_offset + button_offset, button_size - button_offset, button_size - button_offset};
+        stop_button = {pause_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
+        previous_button = {stop_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
+        next_button = {previous_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
+        DrawRectangleRec(pause_button, pause_hover ? LIGHTGRAY : GRAY);
+        DrawRectangleRec(stop_button, stop_hover ? LIGHTGRAY : GRAY);
+        DrawRectangleRec(next_button, next_hover ? LIGHTGRAY : GRAY);
+        DrawRectangleRec(previous_button, previous_hover ? LIGHTGRAY : GRAY);
     }
-
-    track_bar = {button_offset + x_offset, vertical_border_position + button_size + border_offset + button_offset, horizontal_border_position, button_size - button_offset};
-    DrawRectangleRec(track_bar, LIGHTGRAY);
-    DrawRectangleRec({track_bar.x, track_bar.y, time_position / track_duration * track_bar.width, track_bar.height}, BLUE);
-
-    DrawTextEx(font, timer_label.c_str(), {track_bar.x + track_bar.width - time_label_length.x - border_offset, border_offset + button_size + vertical_border_position}, 45, 1.0f, BLACK);
-
     EndShaderMode();
-
-    pause_button = {button_offset + x_offset, vertical_border_position + border_offset + button_offset, button_size - button_offset, button_size - button_offset};
-    stop_button = {pause_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
-    previous_button = {stop_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
-    next_button = {previous_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
-    // Buttons
-    DrawRectangleRec(pause_button, pause_hover ? LIGHTGRAY : GRAY);
-    DrawRectangleRec(stop_button, stop_hover ? LIGHTGRAY : GRAY);
-    DrawRectangleRec(next_button, next_hover ? LIGHTGRAY : GRAY);
-    DrawRectangleRec(previous_button, previous_hover ? LIGHTGRAY : GRAY);
 }
 
 void UserInterface::CheckKeyPress(const Music &music) {
@@ -67,7 +80,6 @@ void UserInterface::CheckKeyPress(const Music &music) {
     }
 
     if (CheckCollisionPointRec(mouse_position, track_bar) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        // track_bar = {button_offset + x_offset, border_offset + button_offset + 7.5f / 7.0f * vertical_border_position, horizontal_border_position + button_size - button_offset, button_size - button_offset};
         time_position = (mouse_position.x - track_bar.x) / track_bar.width * track_duration;
         SeekMusicStream(music, time_position);
     }

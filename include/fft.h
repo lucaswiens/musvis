@@ -9,8 +9,8 @@
 class FFT {
   public:
     FFT(const size_t &n, const size_t &width, const size_t &height);
-    void Draw(const bool &track_list_is_empty, const size_t &width, const size_t &height);
-    void FastFourierTransformation(); // wrapper for fft
+    void Draw(const bool &is_empty_track_list, const size_t &width, const size_t &height);
+    void FastFourierTransformation(const bool &is_empty_track_list); // wrapper for fft
     void SetWave(const size_t i, const float &w) { waves.at(i) = w; }
 
     size_t GetN() { return n; }

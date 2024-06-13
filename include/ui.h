@@ -2,6 +2,7 @@
 #define USERINTERFACE_H
 
 #include <algorithm>
+#include <limits>
 #include <raylib.h>
 #include <string>
 #include <vector>
@@ -14,7 +15,7 @@ class UserInterface {
     void CheckFilesDropped();
     void CheckEvents();
     void AddTrack(const std::string &track);
-    void RemoveTrack(const std::string &track);
+    void RemoveTrack(const size_t &track_position);
     void NextTrack();
     void PreviousTrack();
     void Draw(const size_t &width, const size_t &height);
