@@ -125,7 +125,8 @@ void UserInterface::CheckEvents() {
 }
 
 void UserInterface::AddTrack(const std::string &track) {
-    if (std::find(track_list.begin(), track_list.end(), track) == track_list.end()) {
+    const bool is_supported_file = IsFileExtension(track.c_str(), ".mp3") || IsFileExtension(track.c_str(), ".wav") || IsFileExtension(track.c_str(), ".ogg") || IsFileExtension(track.c_str(), ".ogg") || IsFileExtension(track.c_str(), ".qoa");
+    if (is_supported_file && std::find(track_list.begin(), track_list.end(), track) == track_list.end()) {
         track_list_buttons.push_back({border_offset + button_offset, border_offset + button_offset + track_list_height * track_list.size(), track_list_width, track_list_height - button_offset});
         track_list.push_back(track);
 
