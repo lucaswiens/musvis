@@ -4,12 +4,12 @@
 #include "ui.h"
 
 // FFT is global instance because passing a member callback function is a hassle with the interface of raylib
-MusicPlayer player(1 << 13, 3000, 1080);
+FFT visualizer(1 << 13, 3000, 1080);
 
 void callback(void *bufferData, unsigned int frames) {
     float(*fs)[2] = static_cast<float(*)[2]>(bufferData);
     for (unsigned int i = 0; i < frames; ++i) {
-        player.SetWave(i, fs[i][0]); // currently only supports mono visualisation
+        visualizer.SetWave(i, fs[i][0]); // currently only supports mono visualisation
     }
 }
 
@@ -67,13 +67,13 @@ int main(int argc, char **argv) {
         if (!ui.TrackListIsEmpty() && !ui.IsPaused()) {
             UpdateMusicStream(music);
             AttachAudioStreamProcessor(music.stream, callback);
-            player.FastFourierTransformation();
+            visualizer.FastFourierTransformation();
         }
 
         BeginDrawing();
         ClearBackground(DARKGRAY);
         ui.Draw(width, height);
-        player.Draw(ui.TrackListIsEmpty(), width, height);
+        visualizer.Draw(ui.TrackListIsEmpty(), width, height);
         EndDrawing();
     }
 

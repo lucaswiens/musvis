@@ -1,14 +1,14 @@
-#ifndef MUSICPLAYER_H
-#define MUSICPLAYER_H
+#ifndef FFT_H
+#define FFT_H
 
 #include <algorithm>
 #include <complex>
 #include <raylib.h>
 #include <vector>
 
-class MusicPlayer {
+class FFT {
   public:
-    MusicPlayer(const size_t &n, const size_t &width, const size_t &height);
+    FFT(const size_t &n, const size_t &width, const size_t &height);
     void Draw(const bool &track_list_is_empty, const size_t &width, const size_t &height);
     void FastFourierTransformation(); // wrapper for fft
     void SetWave(const size_t i, const float &w) { waves.at(i) = w; }
@@ -21,6 +21,7 @@ class MusicPlayer {
   private:
     size_t n, rectangle_width, wave_width;
     int x_offset, y_offset;
+    float max_amplitude;
     std::vector<std::complex<float>> waves;
     std::vector<std::complex<float>> frequencies;
     std::vector<float> update_timer, previous_frequencies;
@@ -28,4 +29,4 @@ class MusicPlayer {
     void fft(std::complex<float> *waves, const size_t &wave_size, std::complex<float> *frequencies, const int &stride);
 };
 
-#endif // !MUSICPLAYER_H
+#endif // !FFT_H
