@@ -47,9 +47,9 @@ void FFT::fft(std::complex<float> *waves, const size_t &wave_size, std::complex<
     }
 }
 
-void FFT::Draw(const bool &is_empty_track_list, const size_t &width, const size_t &height) {
-    x_offset = width / 8;
-    y_offset = height / 8;
+void FFT::Draw(const size_t &width, const size_t &height) {
+    x_offset = width / 8.0f;
+    y_offset = height / 8.0f;
 
     const size_t max_frequency = std::min({width / rectangle_width, n});
     for (size_t i = 0; i * rectangle_width < width && i < n; i++) {

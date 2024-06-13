@@ -13,11 +13,11 @@ UserInterface::UserInterface(const KeyboardKey &pause_key, const KeyboardKey &st
 }
 
 void UserInterface::Draw(const size_t &width, const size_t &height) {
-    x_offset = width / 8;
-    y_offset = height / 8;
+    x_offset = width / 8.0f;
+    y_offset = height / 8.0f;
 
     const float horizontal_border_position = (width - x_offset - button_offset - border_offset);
-    const float vertical_border_position = 7.0f * height / 8;
+    const float vertical_border_position = 7.0f * height / 8.0f;
 
     time_position += !pause * GetFrameTime();
     std::string timer_label = ConvertSecondToTimeLabel(time_position) + " / " + track_duration_label;
@@ -32,7 +32,7 @@ void UserInterface::Draw(const size_t &width, const size_t &height) {
         std::string empty_track_list_instructions = "Drag your music files here to start playing:";
         Vector2 empty_track_list_instructions_length = MeasureTextEx(font, empty_track_list_instructions.c_str(), 65, 1.0f);
 
-        DrawTextEx(font, empty_track_list_instructions.c_str(), {(width - empty_track_list_instructions_length.x) / 2, height / 2}, 65, 1.0f, BLACK);
+        DrawTextEx(font, empty_track_list_instructions.c_str(), {(width - empty_track_list_instructions_length.x) / 2.0f, height / 2.0f}, 65, 1.0f, BLACK);
     } else {
         for (size_t i = 0; i < track_list.size(); i++) {
             track_list_buttons.at(i) = {border_offset + button_offset, border_offset + button_offset + track_list_height * i, track_list_width, track_list_height - button_offset};
