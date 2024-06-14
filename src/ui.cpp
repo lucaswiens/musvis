@@ -100,12 +100,11 @@ void UserInterface::CheckKeyPress(const Music &music) {
     if (CheckCollisionPointRec(mouse_position, track_bar) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         time_position = (mouse_position.x - track_bar.x) / track_bar.width * track_duration;
         SeekMusicStream(music, time_position);
-    }
-
-    if (IsKeyPressed(stop_key) || (stop_hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
+    } else if (IsKeyPressed(stop_key) || (stop_hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         StopMusicStream(music);
         PlayMusicStream(music);
         SetPause(false);
+        time_position = 0;
     } else if (IsKeyPressed(pause_key) || (pause_hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         pause = !IsPaused();
         if (IsPaused()) {
