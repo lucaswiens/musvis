@@ -42,11 +42,11 @@ class UserInterface {
     Shader shader;
     Image atlas;
     KeyboardKey pause_key, stop_key, next_key, previous_key;
-    bool has_track_changed, pause, pause_hover = false, stop_hover = false, next_hover = false, previous_hover = false;
+    bool has_track_changed, pause, pause_hover, stop_hover, previous_hover, next_hover, volume_hover;
     size_t current_track, track_hover;
-    float border_offset, button_offset, button_size, track_list_height, track_list_width, track_name_length, x_offset, y_offset, track_duration, time_position;
+    float border_offset, button_offset, button_size, track_list_height, track_list_width, track_name_length, x_offset, y_offset, track_duration, time_position, volume;
     Vector2 mouse_position;
-    Rectangle pause_button, stop_button, next_button, previous_button, track_bar;
+    Rectangle pause_button, stop_button, previous_button, next_button, volume_bar, track_bar;
     std::vector<Rectangle> track_list_buttons;
     std::vector<std::string> track_list;
     std::vector<int> codepoints;

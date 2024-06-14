@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
         BeginDrawing();
         ClearBackground(DARKGRAY);
         ui.Draw(width, height);
-        visualizer.Draw(ui.TrackListIsEmpty(), width, height);
+        visualizer.Draw(width, height);
         EndDrawing();
     }
 
