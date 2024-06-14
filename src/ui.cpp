@@ -1,7 +1,8 @@
 #include "ui.h"
 #include <raylib.h>
 
-UserInterface::UserInterface(const KeyboardKey &pause_key, const KeyboardKey &stop_key, const KeyboardKey &next_key, const KeyboardKey &previous_key) : pause_key(pause_key), stop_key(stop_key), next_key(next_key), previous_key(previous_key), border_offset(10), button_offset(5), button_size(40), track_list_height(40), track_list_width(375), track_name_length(28) {
+UserInterface::UserInterface(const KeyboardKey &pause_key, const KeyboardKey &stop_key, const KeyboardKey &next_key, const KeyboardKey &previous_key)
+    : pause_key(pause_key), stop_key(stop_key), next_key(next_key), previous_key(previous_key), pause_hover(false), stop_hover(false), previous_hover(false), next_hover(false), volume_hover(false), border_offset(10), button_offset(5), button_size(40), track_list_height(40), track_list_width(375), track_name_length(28), volume(GetMasterVolume()) {
     int file_size = 0;
     unsigned char *file_data = LoadFileData(font_path.c_str(), &file_size);
     font.glyphs = LoadFontData(file_data, file_size, 32, 0, 0, FONT_SDF);
@@ -67,6 +68,14 @@ void UserInterface::Draw(const size_t &width, const size_t &height) {
         DrawTextEx(font, "S", {stop_button.x + button_size * 0.125f, stop_button.y - button_size * 0.125f}, 45, 1.0f, BLACK);
         DrawTextEx(font, "<", {previous_button.x + button_size * 0.125f, previous_button.y - button_size * 0.25f}, 45, 1.0f, BLACK);
         DrawTextEx(font, ">", {next_button.x + button_size * 0.125f, next_button.y - button_size * 0.25f}, 45, 1.0f, BLACK);
+
+        volume_bar = {next_button.x + button_offset + button_size, pause_button.y, pause_button.width * (1 + volume_hover * 4), pause_button.height};
+        DrawRectangleRec(volume_bar, GRAY);
+        if (volume_hover) {
+            DrawRectangle(volume_bar.x + volume * volume_bar.width, volume_bar.y, 10, volume_bar.height, BLUE);
+        } else {
+            DrawTextEx(font, "V", {volume_bar.x + button_size * 0.125f, volume_bar.y - button_size * 0.125f}, 45, 1.0f, BLACK);
+        }
     }
     EndShaderMode();
 }
@@ -78,6 +87,7 @@ void UserInterface::CheckKeyPress(const Music &music) {
     stop_hover = CheckCollisionPointRec(mouse_position, stop_button);
     previous_hover = CheckCollisionPointRec(mouse_position, previous_button);
     next_hover = CheckCollisionPointRec(mouse_position, next_button);
+    volume_hover = CheckCollisionPointRec(mouse_position, volume_bar) || (volume_hover && IsMouseButtonDown(MOUSE_BUTTON_LEFT));
 
     track_hover = std::numeric_limits<size_t>::max();
     for (size_t i = 0; i < track_list_buttons.size(); i++) {
@@ -107,6 +117,9 @@ void UserInterface::CheckKeyPress(const Music &music) {
         PreviousTrack();
     } else if (IsKeyPressed(next_key) || (next_hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         NextTrack();
+    } else if (volume_hover && IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+        volume = std::max({0.0f, std::min({1.0f, (mouse_position.x - volume_bar.x) / volume_bar.width})});
+        SetMasterVolume(volume);
     } else if (track_hover < std::numeric_limits<size_t>::max() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         SetCurrentTrack(track_hover);
     } else if (track_hover < std::numeric_limits<size_t>::max() && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
