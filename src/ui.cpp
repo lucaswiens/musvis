@@ -57,20 +57,28 @@ void UserInterface::Draw(const size_t &width, const size_t &height) {
         stop_button = {pause_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
         previous_button = {stop_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
         next_button = {previous_button.x + button_offset + button_size, pause_button.y, pause_button.width, pause_button.height};
+
         DrawRectangleRec(pause_button, pause_hover ? LIGHTGRAY : GRAY);
         DrawRectangleRec(stop_button, stop_hover ? LIGHTGRAY : GRAY);
-        DrawRectangleRec(next_button, next_hover ? LIGHTGRAY : GRAY);
         DrawRectangleRec(previous_button, previous_hover ? LIGHTGRAY : GRAY);
+        DrawRectangleRec(next_button, next_hover ? LIGHTGRAY : GRAY);
+
+        DrawTextEx(font, IsPaused() ? "p" : "P", {pause_button.x + button_size * 0.125f, pause_button.y - button_size * 0.125f}, 45, 1.0f, BLACK);
+        DrawTextEx(font, "S", {stop_button.x + button_size * 0.125f, stop_button.y - button_size * 0.125f}, 45, 1.0f, BLACK);
+        DrawTextEx(font, "<", {previous_button.x + button_size * 0.125f, previous_button.y - button_size * 0.25f}, 45, 1.0f, BLACK);
+        DrawTextEx(font, ">", {next_button.x + button_size * 0.125f, next_button.y - button_size * 0.25f}, 45, 1.0f, BLACK);
     }
     EndShaderMode();
 }
 
 void UserInterface::CheckKeyPress(const Music &music) {
     mouse_position = GetMousePosition();
+
     pause_hover = CheckCollisionPointRec(mouse_position, pause_button);
     stop_hover = CheckCollisionPointRec(mouse_position, stop_button);
-    next_hover = CheckCollisionPointRec(mouse_position, next_button);
     previous_hover = CheckCollisionPointRec(mouse_position, previous_button);
+    next_hover = CheckCollisionPointRec(mouse_position, next_button);
+
     track_hover = std::numeric_limits<size_t>::max();
     for (size_t i = 0; i < track_list_buttons.size(); i++) {
         if (CheckCollisionPointRec(mouse_position, track_list_buttons.at(i))) {
@@ -89,16 +97,16 @@ void UserInterface::CheckKeyPress(const Music &music) {
         PlayMusicStream(music);
         SetPause(false);
     } else if (IsKeyPressed(pause_key) || (pause_hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
-        SetPause(!IsPaused());
+        pause = !IsPaused();
         if (IsPaused()) {
             PauseMusicStream(music);
         } else {
             ResumeMusicStream(music);
         }
-    } else if (IsKeyPressed(next_key) || (next_hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
-        NextTrack();
     } else if (IsKeyPressed(previous_key) || (previous_hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         PreviousTrack();
+    } else if (IsKeyPressed(next_key) || (next_hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
+        NextTrack();
     } else if (track_hover < std::numeric_limits<size_t>::max() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         SetCurrentTrack(track_hover);
     } else if (track_hover < std::numeric_limits<size_t>::max() && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
