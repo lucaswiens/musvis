@@ -40,7 +40,7 @@ class UserInterface {
     Font font;
     std::string font_path = "resources/fonts/KleeOne-SemiBold.ttf", track_duration_label;
     Shader shader;
-    Image atlas;
+    // Image atlas;
     KeyboardKey pause_key, stop_key, next_key, previous_key;
     bool has_track_changed, pause, pause_hover, stop_hover, previous_hover, next_hover, volume_hover;
     size_t current_track, track_hover;
@@ -50,6 +50,7 @@ class UserInterface {
     std::vector<Rectangle> track_list_buttons;
     std::vector<std::string> track_list;
     std::vector<int> codepoints;
+    std::vector<std::vector<int>> track_name_codepoints;
 };
 
 #endif // !USERINTERFACE_H

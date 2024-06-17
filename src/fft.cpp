@@ -48,11 +48,11 @@ void FFT::fft(std::complex<float> *waves, const size_t &wave_size, std::complex<
 }
 
 void FFT::Draw(const size_t &width, const size_t &height) {
-    x_offset = width / 8.0f;
+    x_offset = width / 4.5f;
     y_offset = height / 8.0f;
 
     const size_t max_frequency = std::min({width / rectangle_width, n});
-    for (size_t i = 0; i * rectangle_width < width && i < n; i++) {
+    for (size_t i = 0; i * rectangle_width < width - x_offset - 15 && i < n; i++) {
         const float &amp = 6.5f * y_offset * std::log(GetWaveWithDecayingAmplitude(i)) / std::log(max_amplitude);
         float hue = 360 * static_cast<float>(i) / max_frequency;
         const float saturation = 1.0;

@@ -1,20 +1,23 @@
 #include "ui.h"
-#include <raylib.h>
 
 UserInterface::UserInterface(const KeyboardKey &pause_key, const KeyboardKey &stop_key, const KeyboardKey &next_key, const KeyboardKey &previous_key)
     : pause_key(pause_key), stop_key(stop_key), next_key(next_key), previous_key(previous_key), pause_hover(false), stop_hover(false), previous_hover(false), next_hover(false), volume_hover(false), border_offset(10), button_offset(5), button_size(40), track_list_height(40), track_list_width(375), track_name_length(28), volume(GetMasterVolume()) {
-    int file_size = 0;
-    unsigned char *file_data = LoadFileData(font_path.c_str(), &file_size);
-    font.glyphs = LoadFontData(file_data, file_size, 32, 0, 0, FONT_SDF);
-    atlas = GenImageFontAtlas(font.glyphs, &font.recs, 95, 32, 0, 1);
-    font.texture = LoadTextureFromImage(atlas);
-    UnloadImage(atlas);
-    SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR); // Required for SDF font
+    // Load font codepoints for UI text unrelated to tracks
+    int utf8_codepoints_counts;
+    int *utf8_codepoints = LoadCodepoints("Drag your music files here to start playing:PpSV<>/1234567890", &utf8_codepoints_counts);
+    for (int i = 0; i < utf8_codepoints_counts; i++) {
+        if (std::find(codepoints.begin(), codepoints.end(), utf8_codepoints[i]) == codepoints.end()) {
+            codepoints.push_back(utf8_codepoints[i]);
+        }
+    }
+
+    font = LoadFontEx(font_path.c_str(), 32, codepoints.data(), codepoints.size());
+    SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
     shader = LoadShader(0, "resources/shaders/sdf.fs");
 }
 
 void UserInterface::Draw(const size_t &width, const size_t &height) {
-    x_offset = width / 8.0f;
+    x_offset = width / 4.5f;
     y_offset = height / 8.0f;
 
     const float horizontal_border_position = (width - x_offset - button_offset - border_offset);
@@ -25,7 +28,7 @@ void UserInterface::Draw(const size_t &width, const size_t &height) {
     Vector2 time_label_length = MeasureTextEx(font, timer_label.c_str(), 45, 1.0f);
 
     track_list_width = x_offset - 50;
-    track_name_length = static_cast<int>(track_list_width / 12);
+    track_name_length = static_cast<int>(track_list_width / 15);
 
     // Track List
     BeginShaderMode(shader);
@@ -33,19 +36,16 @@ void UserInterface::Draw(const size_t &width, const size_t &height) {
         std::string empty_track_list_instructions = "Drag your music files here to start playing:";
         Vector2 empty_track_list_instructions_length = MeasureTextEx(font, empty_track_list_instructions.c_str(), 65, 1.0f);
 
-        DrawTextEx(font, empty_track_list_instructions.c_str(), {(width - empty_track_list_instructions_length.x) / 2.0f, height / 2.0f}, 65, 1.0f, BLACK);
+        DrawTextEx(font, empty_track_list_instructions.c_str(), {(width - empty_track_list_instructions_length.x) / 2.0f, height / 2.0f}, 68, 1.0f, LIGHTGRAY);
     } else {
         for (size_t i = 0; i < track_list.size(); i++) {
             track_list_buttons.at(i) = {border_offset + button_offset, border_offset + button_offset + track_list_height * i, track_list_width, track_list_height - button_offset};
 
-            std::string track = track_list.at(i).substr(track_list.at(i).rfind('/') + 1, track_name_length);
-            track = track.size() < track_name_length ? track : track + "...";
-            Color background = current_track == i ? BLUE : track_hover == i ? LIGHTGRAY : GRAY;
+            const int codepoint_size = track_name_codepoints.at(i).size() < track_name_length ? track_name_codepoints.at(i).size() : track_name_length;
+            const Vector2 position = {border_offset + button_offset + 10, border_offset + button_offset + track_list_height * (i + 0.25f)};
+            const Color background = current_track == i ? BLUE : track_hover == i ? LIGHTGRAY : GRAY;
             DrawRectangleRec(track_list_buttons.at(i), background);
-            const Vector2 position = {border_offset + track_list_height / 2.0f, border_offset + button_offset + track_list_height * (i + 0.25f)};
-            DrawTextEx(font, track.c_str(), position, track_list_height / 1.5f, 1.0, BLACK);
-            // int codepoint_size = codepoints.at(i).size() < track_name_length ? codepoints.at(i).size() : track_name_length;
-            // DrawTextCodepoints(font, codepoints.at(i).data(), codepoint_size, position, track_list_height / 1.5f, 5, BLACK);
+            DrawTextCodepoints(font, track_name_codepoints.at(i).data(), codepoint_size, position, track_list_height / 1.5f, 1.0f, BLACK);
         }
 
         track_bar = {button_offset + x_offset, vertical_border_position + button_size + border_offset + button_offset, horizontal_border_position, button_size - button_offset};
@@ -151,21 +151,27 @@ void UserInterface::AddTrack(const std::string &track) {
         track_list.push_back(track);
 
         std::string track_name = track.substr(track.rfind('/') + 1);
-        for (size_t i = 0; i < track_name.size(); i++) {
-            int codepoint_byte_count = 0;
-            int codepoint = GetCodepoint(&track_name[i], &codepoint_byte_count);
-            if (std::find(codepoints.begin(), codepoints.end(), codepoint) != codepoints.end()) {
-                codepoints.push_back(codepoint);
+
+        int utf8_codepoints_counts;
+        int *utf8_codepoints = LoadCodepoints(track_name.c_str(), &utf8_codepoints_counts);
+        track_name_codepoints.push_back({});
+        for (int i = 0; i < utf8_codepoints_counts; i++) {
+            if (std::find(codepoints.begin(), codepoints.end(), utf8_codepoints[i]) == codepoints.end()) {
+                codepoints.push_back(utf8_codepoints[i]);
             }
+
+            track_name_codepoints.back().push_back(utf8_codepoints[i]);
         }
         font = LoadFontEx(font_path.c_str(), 32, codepoints.data(), codepoints.size());
-        SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR); // Required for SDF font
+        SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
     }
 }
 
 void UserInterface::RemoveTrack(const size_t &track_position) {
     if (track_position < track_list.size()) {
         track_list.erase(track_list.begin() + track_position);
+        track_name_codepoints.erase(track_name_codepoints.begin() + track_position);
+
         if (current_track == track_hover) {
             SetCurrentTrack(track_hover);
         } else if (track_position < current_track) {
