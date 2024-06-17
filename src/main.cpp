@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
         visualizer.FastFourierTransformation(ui.TrackListIsEmpty());
 
         BeginDrawing();
-        ClearBackground(DARKGRAY);
+        ClearBackground({0x10, 0x0F, 0x12, 0xFF});
         ui.Draw(width, height);
         visualizer.Draw(width, height);
         EndDrawing();
